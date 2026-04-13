@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling>=1.24.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shadow-augmentor"
+version = "0.1.0"
+description = "YOLO dataset shadow augmentation with cached object polygons."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "Codex" },
+]
+dependencies = [
+  "numpy>=1.26",
+  "opencv-python-headless>=4.9",
+  "Pillow>=10.0",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+shadow-augmentor-debug = "shadow_augmentor.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/shadow_augmentor"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
