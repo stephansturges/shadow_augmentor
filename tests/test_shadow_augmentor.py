@@ -430,6 +430,89 @@ def test_shadow_debug_limits_to_one_shadow_per_object() -> None:
     assert debug_result.summary()["accepted_count"] == 1
 
 
+def test_shadow_debug_matches_runtime_under_retry_heavy_settings() -> None:
+    image = np.full((96, 96, 3), 255, dtype=np.uint8)
+    shadow_polys = [
+        ShadowPolygon(
+            object_index=0,
+            class_id=0,
+            class_name="car",
+            bbox=YoloBBox(class_id=0, x_center=0.35, y_center=0.25, width=0.25, height=0.25),
+            polygon=((0.2, 0.1), (0.5, 0.1), (0.5, 0.4), (0.2, 0.4)),
+            source="sam",
+            area_ratio=1.0,
+        ),
+        ShadowPolygon(
+            object_index=1,
+            class_id=0,
+            class_name="car",
+            bbox=YoloBBox(class_id=0, x_center=0.65, y_center=0.25, width=0.25, height=0.25),
+            polygon=((0.5, 0.1), (0.8, 0.1), (0.8, 0.4), (0.5, 0.4)),
+            source="sam",
+            area_ratio=1.0,
+        ),
+    ]
+    annotations = [
+        YoloAnnotation(
+            object_index=0,
+            bbox=YoloBBox(class_id=0, x_center=0.35, y_center=0.25, width=0.25, height=0.25),
+            class_name="car",
+        ),
+        YoloAnnotation(
+            object_index=1,
+            bbox=YoloBBox(class_id=0, x_center=0.65, y_center=0.25, width=0.25, height=0.25),
+            class_name="car",
+        ),
+        YoloAnnotation(
+            object_index=2,
+            bbox=YoloBBox(class_id=1, x_center=0.5, y_center=0.6, width=0.6, height=0.25),
+            class_name="person",
+        ),
+    ]
+
+    augmenter = ShadowAugmentor(
+        ShadowAugmentConfig(
+            selected_classes=[0],
+            probability=1.0,
+            side_mode="random",
+            shadow_count=(2, 2),
+            scale=(0.8, 1.6),
+            darkness=(0.35, 0.9),
+            direction_degrees=(60.0, 120.0),
+            blur_ratio=0.03,
+            attachment_span_ratio=(0.4, 1.0),
+            tip_width_ratio=(0.1, 1.2),
+            roundness_factor=(0.0, 0.8),
+            flare_factor=(0.0, 0.7),
+            skew_factor=(0.0, 0.4),
+            bend_factor=(0.0, 0.5),
+            jitter_factor=(0.0, 0.2),
+            density_decay=(0.0, 0.8),
+            density_noise=(0.0, 0.5),
+            max_shadow_coverage_ratio=0.08,
+            max_overlap_with_other_objects_ratio=0.0,
+            max_shadow_attempts=5,
+        )
+    )
+
+    runtime_image = augmenter(
+        image.copy(),
+        shadow_polys,
+        rng=np.random.default_rng(1),
+        annotations=annotations,
+    )
+    debug_result = simulate_shadow_debug(
+        augmenter,
+        image.copy(),
+        shadow_polys,
+        rng=np.random.default_rng(1),
+        annotations=annotations,
+    )
+
+    assert np.array_equal(debug_result.augmented_image, runtime_image)
+    assert debug_result.summary()["accepted_count"] == 2
+
+
 def test_debug_overlay_bundle_and_cli_workflows(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     config_path = _write_dataset(tmp_path)
     dataset, _ = _build_default_cache(config_path)

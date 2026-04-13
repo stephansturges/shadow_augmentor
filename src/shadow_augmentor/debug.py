@@ -132,7 +132,6 @@ def simulate_shadow_debug(
 
     for polygon in target_polygons:
         accepted_mask: np.ndarray | None = None
-        accepted_darkness: float | None = None
         accepted_edge_start: np.ndarray | None = None
         accepted_edge_end: np.ndarray | None = None
         accepted_direction: np.ndarray | None = None
@@ -158,7 +157,6 @@ def simulate_shadow_debug(
             )
             direction = augmenter._choose_direction(rng, outward_normal)
             shadow_length = augmenter._sample_shadow_length(polygon_pixels, rng)
-            darkness = augmenter._sample_float(rng, augmenter.config.darkness)
             shadow_shape_array = build_shadow_shape(
                 edge_start=edge_start,
                 edge_end=edge_end,
@@ -185,7 +183,6 @@ def simulate_shadow_debug(
                         edge_end=_to_point(edge_end),
                         direction=_to_point(direction),
                         shadow_length=float(shadow_length),
-                        darkness=float(darkness),
                         shadow_shape=tuple(_to_point(point) for point in shadow_shape_array),
                     )
                 )
@@ -201,7 +198,6 @@ def simulate_shadow_debug(
                 edge_end=_to_point(edge_end),
                 direction=_to_point(direction),
                 shadow_length=float(shadow_length),
-                darkness=float(darkness),
                 coverage_ratio=float(coverage_ratio),
                 overlap_ratio=float(overlap_ratio),
                 shadow_shape=tuple(_to_point(point) for point in shadow_shape_array),
@@ -226,15 +222,16 @@ def simulate_shadow_debug(
                 )
                 continue
 
+            darkness = augmenter._sample_float(rng, augmenter.config.darkness)
             attempts.append(
                 ShadowDebugAttempt(
                     accepted=True,
                     reason="accepted",
+                    darkness=float(darkness),
                     **attempt_payload,
                 )
             )
             accepted_mask = mask
-            accepted_darkness = darkness
             accepted_edge_start = edge_start
             accepted_edge_end = edge_end
             accepted_direction = direction
@@ -259,7 +256,6 @@ def simulate_shadow_debug(
             or accepted_length is None
         ):
             continue
-        _ = accepted_darkness
 
     if not np.any(shadow_layers):
         return ShadowDebugResult(

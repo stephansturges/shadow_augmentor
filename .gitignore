@@ -5,5 +5,4 @@ __pycache__/
 .venv-smoke/
 tmp/
 .DS_Store
-README.md
 docs/

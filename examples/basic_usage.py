@@ -1,4 +1,5 @@
 from shadow_augmentor import (
+    BBoxRectangleSegmenter,
     SAMBoxPredictorAdapter,
     ShadowAugmentConfig,
     ShadowAugmentedYoloDataset,
@@ -15,9 +16,10 @@ def main() -> None:
     if not report.valid:
         raise RuntimeError("Dataset validation failed.")
 
-    # Replace this with your own SAM-style predictor instance.
-    sam3_predictor = ...
-    segmenter = SAMBoxPredictorAdapter(sam3_predictor)
+    # This smoke-test segmenter uses the bbox as the polygon source.
+    # Replace it with `SAMBoxPredictorAdapter(your_predictor)` once you have a
+    # real SAM-style box segmenter available.
+    segmenter = BBoxRectangleSegmenter()
 
     ShadowPolyBuilder(dataset).generate(
         segmenter=segmenter,
@@ -30,6 +32,10 @@ def main() -> None:
             min_polygon_area_ratio=0.05,
         ),
     )
+
+    # Example SAM hook:
+    # sam_segmenter = SAMBoxPredictorAdapter(your_sam_predictor)
+    # ShadowPolyBuilder(dataset).generate(segmenter=sam_segmenter, ...)
 
     augmenter = ShadowAugmentor(
         ShadowAugmentConfig(
